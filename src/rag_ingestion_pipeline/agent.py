@@ -1,11 +1,13 @@
 import os
+import logging
 
+from contextvars import ContextVar
 from dotenv import load_dotenv
-from agent_framework import Agent, tool
 from agent_framework.openai import OpenAIChatClient
 from rag_ingestion_pipeline.main import LookupRequest, lookup_electricity
 from rag_ingestion_pipeline.main import AskRequest, ask_question
 from rag_ingestion_pipeline.knowledge_base import FAQ_DOCUMENT_ID
+from agent_framework import (Agent, FunctionInvocationContext, FunctionMiddleware, MiddlewareTermination, tool)
 
 load_dotenv()
 
@@ -98,9 +100,51 @@ def ask(question: str) -> dict:
         return {"error": "The FAQ question could not be answered."}
 
 
+
+logger = logging.getLogger("powerassist.agent")
+tool_call_count: ContextVar[int] = ContextVar(
+    "powerassist_tool_call_count",
+    default=0,
+)
+
+
+class ToolCallLimitMiddleware(FunctionMiddleware):
+    """Limit and log tool calls within one agent request."""
+
+    def __init__(self, max_calls: int = 5):
+        self.max_calls = max_calls
+
+    async def process(
+        self,
+        context: FunctionInvocationContext,
+        call_next,
+    ) -> None:
+        count = tool_call_count.get()
+
+        if count >= self.max_calls:
+            logger.warning("Agent tool-call limit reached")
+            raise MiddlewareTermination(
+                "Tool-call limit reached. Answer using information already available."
+            )
+
+        tool_call_count.set(count + 1)
+
+        tool_name = getattr(context.function, "name", "unknown")
+        logger.info(
+            "Agent tool call %s/%s: %s",
+            count + 1,
+            self.max_calls,
+            tool_name,
+        )
+
+        await call_next()
+
+
+
 agent = Agent(
     client=client,
     name="PowerAssist",
     instructions=INSTRUCTIONS,
     tools=[predict, lookup, ask],
+    middleware=[ToolCallLimitMiddleware(max_calls=5)],
 )

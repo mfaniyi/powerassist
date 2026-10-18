@@ -29,6 +29,17 @@ logging.basicConfig(
 
 logger = logging.getLogger("powerassist")
 
+def is_out_of_scope(message: str) -> bool:
+    """Detect a few clearly unrelated requests."""
+    unrelated_topics = (
+        "write me a poem about romance",
+        "who won the football match",
+        "tell me a joke about politics",
+    )
+
+    normalized_message = message.lower().strip()
+    return any(topic in normalized_message for topic in unrelated_topics)
+
 # Create the database tables when the application starts.
 create_tables()
 
@@ -323,7 +334,21 @@ async def agent_chat(request: AgentChatRequest):
             status_code=422,
             detail="Please enter a question containing at least one non-space character.",
         )
-    from rag_ingestion_pipeline.agent import agent
+
+    if is_out_of_scope(request.message):
+        logger.warning("Out-of-scope agent request rejected")
+        return {
+            "message": request.message,
+            "answer": (
+                "I can only help with Nigerian electricity information, "
+                "energy consumption, distribution, tariffs, and relevant "
+                "uploaded documents."
+            ),
+        }
+
+    from rag_ingestion_pipeline.agent import agent, tool_call_count
+
+    token = tool_call_count.set(0)
 
     try:
         result = await agent.run(request.message)
@@ -332,9 +357,11 @@ async def agent_chat(request: AgentChatRequest):
             "message": request.message,
             "answer": result.text,
         }
-    except Exception as exc:
+    except Exception:
         logger.exception("Agent request failed")
         raise HTTPException(
             status_code=500,
             detail="PowerAssist could not process your request. Please try again.",
         )
+    finally:
+        tool_call_count.reset(token)

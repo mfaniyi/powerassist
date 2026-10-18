@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "agent-framework>=1.22.0",
+    "azure-identity>=1.26.0",
+    "azure-keyvault-secrets>=4.11.3",
     "fastapi[standard]>=0.141.1",
     "jupyterlab>=4.6.4",
     "matplotlib>=3.11.2",
