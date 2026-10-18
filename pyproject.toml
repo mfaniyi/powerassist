@@ -1,0 +1,40 @@
+[project]
+name = "powerassist"
+version = "0.1.0"
+description = "PowerAssist: Electricity Information and Energy Estimation Agent"
+readme = "README.md"
+authors = [
+    { name = "Michael Faniyi", email = "michaelfa@ha-shem.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "agent-framework>=1.22.0",
+    "fastapi[standard]>=0.141.1",
+    "jupyterlab>=4.6.4",
+    "matplotlib>=3.11.2",
+    "openai>=3.24.0",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.6",
+    "pgvector>=0.5.0",
+    "psycopg[binary]>=3.3.6",
+    "pypdf>=6.19.0",
+    "python-dotenv>=1.2.3",
+    "sentence-transformers>=6.1.0",
+    "sqlalchemy>=2.1.1",
+]
+
+[project.scripts]
+powerassist = "rag_ingestion_pipeline:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.uv.build-backend]
+module-name = "rag_ingestion_pipeline"
+module-root = "src"
