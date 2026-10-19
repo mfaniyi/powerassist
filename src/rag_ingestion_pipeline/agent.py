@@ -27,7 +27,9 @@ def get_azure_openai_api_key() -> str:
     key_vault_url = os.getenv("KEY_VAULT_URL")
 
     if key_vault_url:
-        credential = DefaultAzureCredential()
+        credential = DefaultAzureCredential(
+            managed_identity_client_id=os.getenv("AZURE_CLIENT_ID")
+        )
         try:
             secret_client = SecretClient(
                 vault_url=key_vault_url,
