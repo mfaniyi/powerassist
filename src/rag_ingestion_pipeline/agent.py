@@ -3,20 +3,56 @@ import logging
 
 from contextvars import ContextVar
 from dotenv import load_dotenv
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from agent_framework.openai import OpenAIChatClient
 from rag_ingestion_pipeline.main import LookupRequest, lookup_electricity
 from rag_ingestion_pipeline.main import AskRequest, ask_question
 from rag_ingestion_pipeline.knowledge_base import FAQ_DOCUMENT_ID
-from agent_framework import (Agent, FunctionInvocationContext, FunctionMiddleware, MiddlewareTermination, tool)
+from agent_framework import (
+    Agent,
+    FunctionInvocationContext,
+    FunctionMiddleware,
+    MiddlewareTermination,
+    tool,
+)
 
 load_dotenv()
+
+logger = logging.getLogger("powerassist.agent")
+
+
+def get_azure_openai_api_key() -> str:
+    """Load the API key from Key Vault in Azure or .env locally."""
+    key_vault_url = os.getenv("KEY_VAULT_URL")
+
+    if key_vault_url:
+        credential = DefaultAzureCredential()
+        try:
+            secret_client = SecretClient(
+                vault_url=key_vault_url,
+                credential=credential,
+            )
+            return secret_client.get_secret("AZURE-OPENAI-API-KEY").value
+        finally:
+            credential.close()
+
+    local_api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    if not local_api_key:
+        raise RuntimeError(
+            "Configure KEY_VAULT_URL or AZURE_OPENAI_API_KEY."
+        )
+
+    return local_api_key
+
 
 client = OpenAIChatClient(
     model=os.getenv("AZURE_OPENAI_CHAT_MODEL")
     or os.getenv("AZURE_OPENAI_DEPLOYMENT"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_key=get_azure_openai_api_key(),
 )
+
 
 INSTRUCTIONS = """
 You are PowerAssist, an electricity information assistant for Nigeria.
