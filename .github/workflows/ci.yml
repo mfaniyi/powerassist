@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql+psycopg://raguser:ragpassword@localhost:5433/ragdb
+      AZURE_OPENAI_ENDPOINT: https://example.openai.azure.com/
+      AZURE_OPENAI_CHAT_MODEL: ci-test-deployment
+      AZURE_OPENAI_API_KEY: ci-test-key
 
     # Start PostgreSQL with pgvector for the test environment.
     services:
