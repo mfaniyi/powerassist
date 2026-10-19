@@ -1,3 +1,4 @@
+import os
 import logging
 from uuid import uuid4
 from pathlib import Path
@@ -17,6 +18,7 @@ from rag_ingestion_pipeline.retrieval import hybrid_search
 from rag_ingestion_pipeline.reranking import rerank_chunks
 from rag_ingestion_pipeline.generation import generate_grounded_answer
 from rag_ingestion_pipeline.knowledge_base import initialize_knowledge_base
+from azure.monitor.opentelemetry import configure_azure_monitor
 
 
 app = FastAPI(title="PowerAssist")
@@ -28,6 +30,18 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("powerassist")
+
+# Configure Azure Application Insights when a connection string is available.
+connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+
+if connection_string:
+    configure_azure_monitor(
+        connection_string=connection_string,
+        logger_name="powerassist",
+    )
+    logger.info("Application Insights monitoring configured.")
+else:
+    logger.info("Application Insights connection string not configured.")
 
 def is_out_of_scope(message: str) -> bool:
     """Detect a few clearly unrelated requests."""

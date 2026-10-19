@@ -11,9 +11,8 @@ dependencies = [
     "agent-framework>=1.22.0",
     "azure-identity>=1.26.0",
     "azure-keyvault-secrets>=4.11.3",
+    "azure-monitor-opentelemetry>=1.8.11",
     "fastapi[standard]>=0.141.1",
-    "jupyterlab>=4.6.4",
-    "matplotlib>=3.11.2",
     "openai>=3.24.0",
     "openpyxl>=3.1.5",
     "pandas>=3.0.6",
@@ -34,6 +33,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "jupyterlab>=4.6.4",
+    "matplotlib>=3.11.2",
     "pytest>=9.1.1",
 ]
 

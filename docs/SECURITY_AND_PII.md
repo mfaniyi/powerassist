@@ -15,8 +15,9 @@ PowerAssist provides information about Nigerian electricity distribution, tariff
 
 - Store local development secrets in `.env`, which must remain excluded from Git.
 - Never hardcode API keys, passwords, or connection strings in source code.
-- In Azure, store application secrets in Azure Key Vault and retrieve them through an approved identity-based mechanism.
-- Restrict secret access to authorized application identities and administrators.
+- Store Azure application secrets in Azure Key Vault.
+- Use managed identity for identity-based access to supported Azure resources.
+- Verify runtime secret retrieval and restrict access to authorized identities and administrators.
 
 ## 4. Logging and Monitoring
 
@@ -24,16 +25,18 @@ PowerAssist provides information about Nigerian electricity distribution, tariff
 - Do not log API keys, authorization headers, full request bodies, or sensitive tool arguments.
 - Return generic error messages to users while keeping necessary diagnostic details in protected monitoring systems.
 - Restrict access to logs and monitoring data.
+- Application Insights telemetry transmission has been verified through successful ingestion responses.
 
 ## 5. Data Retention and Deletion
 
 - Do not intentionally persist chat messages beyond what is required to process the request unless a documented feature requires it.
-- Retain operational logs only for an explicitly configured period appropriate to troubleshooting and security monitoring.
-- Delete expired logs and test data according to the configured retention policy.
+- Review retention settings for the database, hosting platform, and monitoring service.
+- Delete expired logs and test data according to the applicable retention policy.
 - Review uploaded documents and indexed content periodically; remove content when it is no longer needed or when deletion is authorized.
-- Confirm the actual retention behavior of the database, hosting platform, and monitoring service before production deployment.
 
-**Proposed initial policy:** Retain application telemetry for 30 days, then delete it unless a documented operational or legal requirement justifies a different period. This is a proposed project setting, not a claim that automatic deletion is already configured.
+**Current telemetry retention:** Application Insights is configured to retain telemetry for 90 days. Verify the resource's effective retention setting before production use.
+
+**Proposed policy:** Consider reducing telemetry retention to 30 days if appropriate for troubleshooting and security monitoring. This change is not yet implemented.
 
 ## 6. Access Control
 
@@ -51,7 +54,7 @@ PowerAssist provides information about Nigerian electricity distribution, tariff
 
 ## 8. Privacy and Compliance
 
-This document describes intended technical safeguards; it does not establish legal compliance. Before production use, review applicable Nigerian data protection requirements, contractual obligations, and any other laws relevant to the users and data being processed.
+This document describes intended technical safeguards; it does not establish legal compliance. Before production use, review applicable Nigerian data protection requirements, contractual obligations, and other laws relevant to the users and data being processed.
 
 ## 9. Implementation Status
 
@@ -61,7 +64,9 @@ This document describes intended technical safeguards; it does not establish leg
 | Basic out-of-scope guardrail | Implemented and tested |
 | Tool-call limit | Implemented and tested |
 | Local secret exclusion from Git | Configured |
-| Azure Key Vault integration | Pending |
-| Managed identity | Configured |
-| Application Insights integration | Configured |
-| Configured telemetry retention | Configured |
+| Azure secrets stored in Key Vault | Verified |
+| Managed identity and Key Vault permissions | Configured |
+| Application runtime retrieval of Key Vault secrets | Pending verification |
+| Application Insights integration | Configured; ingestion verified |
+| Telemetry retention | 90 days; verify effective resource setting |
+| 30-day telemetry retention policy | Proposed, not implemented |
