@@ -16,6 +16,8 @@ jobs:
   test:
     name: Run automated tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg://raguser:ragpassword@localhost:5433/ragdb
 
     # Start PostgreSQL with pgvector for the test environment.
     services:
