@@ -2,7 +2,15 @@
 
 PowerAssist is a FastAPI-based, tool-using AI agent that helps users understand electricity usage, estimate appliance energy consumption, and retrieve information about Nigeria’s electricity sector.
 
-The project builds on a Retrieval-Augmented Generation (RAG) pipeline and includes three core tools: `/ask`, `/predict`, and `/lookup`. It also incorporates security guardrails, automated tests, Azure Key Vault integration, managed identity, and Application Insights monitoring.
+Built on a Retrieval-Augmented Generation (RAG) pipeline, PowerAssist provides three core tools: **Ask**, **Predict**, and **Lookup**. It includes a web interface, document ingestion, security guardrails, automated tests, Azure Key Vault integration, managed identity, and Application Insights monitoring.
+
+## Live Application
+
+- **Web interface:** https://powerassist-api.grayplant-1453df5e.eastus.azurecontainerapps.io/ui
+- **API root:** https://powerassist-api.grayplant-1453df5e.eastus.azurecontainerapps.io/
+- **API documentation:** https://powerassist-api.grayplant-1453df5e.eastus.azurecontainerapps.io/docs
+
+The deployed `v4` image was built and pushed successfully to Azure Container Registry. The `/ui` endpoint was verified to return HTTP 200 with `text/html` content, and the updated interface was visually checked.
 
 ## Features
 
@@ -10,36 +18,42 @@ The project builds on a Retrieval-Augmented Generation (RAG) pipeline and includ
 - **Predict:** Estimates electricity consumption in kilowatt-hours (kWh) from appliance power and usage duration.
 - **Lookup:** Retrieves structured electricity-sector information.
 - **Document ingestion:** Supports PDF and TXT uploads for knowledge-base ingestion.
-- **Agent interface:** Provides a web UI and an agent chat endpoint.
+- **Web interface:** Provides an HTML frontend for interacting with PowerAssist.
+- **Agent endpoint:** Exposes a tool-using agent through `/agent/chat`.
 - **Guardrails:** Validates inputs, restricts tool usage, and limits agent tool calls.
-- **Secrets management:** Supports Azure Key Vault in Azure and environment-based secrets for local development.
-- **Monitoring:** Supports Azure Application Insights telemetry.
+- **Secrets management:** Supports Azure Key Vault and environment-based local development.
+- **Monitoring:** Integrates Azure Application Insights and Azure Monitor telemetry.
+- **Automated testing:** Uses pytest and GitHub Actions CI.
 
 ## Architecture
 
 ```text
 User
-  |
-  v
+ |
+ v
+PowerAssist HTML Interface / API
+ |
+ v
 FastAPI Application
-  |
-  +--> /ask ------> RAG Retrieval and Answer Generation
-  |
-  +--> /predict --> Energy Consumption Calculation
-  |
-  +--> /lookup ---> Structured Electricity Information
-  |
-  +--> /upload ---> Document Ingestion
-  |
-  +--> /agent/chat -> Tool-Using Agent
-                         |
-                         +--> Ask
-                         +--> Predict
-                         +--> Lookup
+ |
+ +--> /ask -------> RAG retrieval and answer generation
+ |
+ +--> /predict ---> Energy consumption calculation
+ |
+ +--> /lookup ----> Structured electricity information
+ |
+ +--> /upload ----> Document ingestion
+ |
+ +--> /agent/chat -> Tool-using AI agent
+                       |
+                       +--> Ask
+                       +--> Predict
+                       +--> Lookup
 
-PostgreSQL + pgvector --> RAG Storage
-Azure Key Vault -------> Application Secrets
-Application Insights --> Monitoring and Telemetry
+PostgreSQL + pgvector --> RAG storage
+Azure Key Vault -------> Secret management
+Managed Identity ------> Azure authentication
+Application Insights --> Monitoring and telemetry
 ```
 
 ## Technology Stack
@@ -48,27 +62,27 @@ Application Insights --> Monitoring and Telemetry
 - Microsoft Agent Framework
 - Azure OpenAI
 - Azure Key Vault and Azure Identity
+- Azure Container Apps and Azure Container Registry
 - Azure Application Insights and OpenTelemetry
 - PostgreSQL and pgvector
-- SQLAlchemy
-- Pydantic
-- `uv` for dependency management
-- Docker for local database development
-- Pytest for automated testing
+- SQLAlchemy and Pydantic
+- `uv` dependency management
+- Docker
+- pytest and GitHub Actions
 
 ## API Endpoints
 
 | Method | Endpoint | Purpose |
 |---|---|---|
 | GET | `/` | Application health/message endpoint |
-| POST | `/ask` | Ask a question against the RAG knowledge base |
+| GET | `/ui` | Open the HTML interface |
+| POST | `/ask` | Query the RAG knowledge base |
 | POST | `/predict` | Estimate appliance energy consumption |
-| POST | `/lookup` | Retrieve structured electricity-sector information |
+| POST | `/lookup` | Retrieve structured electricity information |
 | POST | `/upload` | Upload a supported document |
-| GET | `/ui` | Open the web interface |
 | POST | `/agent/chat` | Interact with the tool-using agent |
 
-Consult the request models in `src/rag_ingestion_pipeline/main.py` for the required JSON fields and validation rules.
+Use `/docs` to inspect the actual request schemas and try the API endpoints.
 
 ## Project Structure
 
@@ -92,28 +106,20 @@ powerassist/
 │       └── generation.py
 ├── tests/
 ├── templates/
-├── .env
+│   └── upload.html
+├── Dockerfile
 ├── pyproject.toml
 ├── uv.lock
 └── README.md
 ```
 
-The exact contents of the repository may evolve as the project develops.
-
-## Prerequisites
-
-- Python version supported by `pyproject.toml`
-- `uv`
-- Docker, for a local PostgreSQL + pgvector database
-- Azure OpenAI deployment and credentials
-- An Azure Key Vault and authorized identity for Azure secret retrieval
-- An Application Insights resource for Azure monitoring
+The repository may contain additional modules or files as development progresses. The `.env` file is local configuration and must not be committed.
 
 ## Local Setup
 
 ### 1. Install dependencies
 
-From the project root, run:
+From the project root:
 
 ```bash
 uv sync --locked --dev
@@ -121,7 +127,7 @@ uv sync --locked --dev
 
 ### 2. Start PostgreSQL with pgvector
 
-If you do not already have the project's local PostgreSQL container running, you can create one with:
+If the project's local database container does not already exist, create one:
 
 ```bash
 docker run -d \
@@ -133,13 +139,11 @@ docker run -d \
   pgvector/pgvector:pg18
 ```
 
-If the container already exists, reuse it rather than creating a duplicate.
-
-Ensure the database exists, the pgvector extension is enabled, and the connection details match your local configuration.
+If the container already exists, reuse it. Confirm that the database, pgvector extension, and connection settings match your local configuration.
 
 ### 3. Configure environment variables
 
-Create a local `.env` file in the project root. Use the variable names expected by the application.
+Create a `.env` file in the project root. Use the values and variable names required by your environment.
 
 ```dotenv
 DATABASE_URL=postgresql+psycopg://raguser:YOUR_PASSWORD@localhost:5433/powerassist
@@ -151,11 +155,9 @@ AZURE_OPENAI_API_KEY=YOUR_LOCAL_API_KEY
 APPLICATIONINSIGHTS_CONNECTION_STRING=
 ```
 
-For local development, `AZURE_OPENAI_API_KEY` is the fallback when `KEY_VAULT_URL` is not configured. Use real credentials only in your local environment; never commit them.
+For local development, the application supports `AZURE_OPENAI_API_KEY` when `KEY_VAULT_URL` is not configured.
 
-The application also supports `KEY_VAULT_URL` for retrieving the Azure OpenAI API key from Key Vault. Azure deployments should use the intended managed identity and appropriate permissions.
-
-Do not commit `.env` or any file containing secrets.
+Never commit actual credentials, connection strings containing secrets, or the `.env` file.
 
 ### 4. Run the application
 
@@ -163,68 +165,58 @@ Do not commit `.env` or any file containing secrets.
 uv run uvicorn rag_ingestion_pipeline.main:app --reload
 ```
 
-Open the local application at:
+Open:
 
-- API root: `http://127.0.0.1:8000/`
-- Web interface: `http://127.0.0.1:8000/ui`
-- API documentation: `http://127.0.0.1:8000/docs`
+- Web interface: http://127.0.0.1:8000/ui
+- API root: http://127.0.0.1:8000/
+- Interactive API documentation: http://127.0.0.1:8000/docs
 
-## Example Usage
+## Example: Energy Estimation
 
-The precise request fields depend on the Pydantic request models in `main.py`.
+The basic energy calculation is:
 
-### Energy estimation
-
-```json
-{
-  "watts": 100,
-  "hours": 5
-}
+```text
+Energy (kWh) = Power (Watts) × Usage (Hours) / 1000
 ```
 
 For a 100-watt appliance operating for five hours:
 
-`Energy (kWh) = (Watts × Hours) / 1000`
+```text
+100 × 5 / 1000 = 0.5 kWh
+```
 
-The estimated consumption is **0.5 kWh**. This is an illustrative calculation, not a claim about the endpoint's exact JSON schema.
-
-### Ask and lookup
-
-Use the interactive API documentation at `/docs` to inspect the request schemas and try `/ask` and `/lookup` with valid sample inputs.
+This is an illustrative calculation. Consult `/docs` for the exact JSON fields required by the deployed endpoint.
 
 ## Security and Privacy
 
-PowerAssist includes security controls intended to protect application credentials, validate requests, and reduce sensitive information in telemetry.
-
 ### Azure Key Vault and managed identity
 
-- The application supports retrieving the Azure OpenAI API key through Azure Key Vault's `SecretClient`.
-- `KEY_VAULT_URL` identifies the vault used by the application.
-- `DefaultAzureCredential` provides the Azure authentication path.
-- The intended managed identity must have the **Key Vault Secrets User** role at the appropriate scope.
-- Local development can use an API key from `.env` when Key Vault is not configured.
+The application supports retrieving the Azure OpenAI API key through Azure Key Vault using `SecretClient` and `DefaultAzureCredential`.
 
-The code and permissions are configured, but deployed runtime retrieval must be verified before claiming end-to-end success.
+The Azure configuration includes:
+
+- Key Vault: `powerassist-kv-mfaniyi`
+- User-assigned identity: `secure-candidate-identity`
+- Required Key Vault role: **Key Vault Secrets User**, assigned at the appropriate vault scope
+- Application configuration: `KEY_VAULT_URL` and `AZURE_CLIENT_ID`
+
+The local development path supports an environment-based API key when Key Vault is not configured.
+
+The application has been deployed with the user-assigned identity configuration. A successful agent response has also been observed. For formal assessment evidence, retain the identity role-assignment output and verify the secret retrieval path and relevant Key Vault audit evidence where available.
 
 ### Application Insights
 
-The application initializes Azure Monitor through `configure_azure_monitor` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is configured.
+The application is configured to initialize Azure Monitor when `APPLICATIONINSIGHTS_CONNECTION_STRING` is supplied.
 
-Avoid logging API keys, authorization headers, complete request bodies, or sensitive tool arguments. Restrict access to monitoring data and review telemetry for unintended personal information.
+Telemetry ingestion has previously been observed. Application logs and telemetry should not contain API keys, authorization headers, or unnecessary personal or sensitive information.
 
-### Retention
+### Retention and privacy controls
 
-Application Insights is configured for 90-day telemetry retention, subject to verification of the effective resource setting. A shorter 30-day policy has been proposed but is **not implemented**.
-
-### Additional controls
-
-- Request validation and tool-level checks
-- Agent tool-call limits
-- Local secret exclusion from version control
-- Least-privilege access to Azure resources
-- Security and privacy documentation in `docs/SECURITY_AND_PII.md`
-
-See [docs/SECURITY_AND_PII.md](docs/SECURITY_AND_PII.md) for implementation status and outstanding verification.
+- Application Insights retention was reported as 90 days during configuration checks.
+- A proposed 30-day retention policy has **not been implemented**.
+- Request validation and agent tool-call limits are included in the application's security controls.
+- Access to Azure resources should follow least-privilege principles.
+- Review `docs/SECURITY_AND_PII.md` for implementation details and outstanding verification.
 
 ## Testing
 
@@ -234,36 +226,42 @@ Run the automated test suite:
 uv run pytest -q
 ```
 
-The suite has previously passed with **35 tests**. Run it again after making changes to confirm the current result.
+The test suite previously passed with **35 tests** after the managed-identity code change. Re-run the tests whenever code changes are made.
 
-The GitHub Actions workflow in `.github/workflows/ci.yml` runs the automated tests in CI. A successful local test run does not replace verification of the latest GitHub Actions run.
+GitHub Actions CI has also passed following earlier fixes. Check the latest workflow run in GitHub when collecting final assessment evidence.
 
-## Deployment
+## Azure Deployment
 
-PowerAssist is designed to run locally during development and can be deployed to Azure Container Apps.
+PowerAssist is deployed to Azure Container Apps.
 
-The Azure deployment uses:
+| Resource | Configuration |
+|---|---|
+| Container App | `powerassist-api` |
+| Resource group | `rg-secure-candidate` |
+| Container Registry | `securecandidateacr.azurecr.io` |
+| Deployed image | `powerassist-api:v4` |
+| Key Vault | `powerassist-kv-mfaniyi` |
+| Application Insights | `powerassist-insights` |
 
-- Azure Container Apps to host the API
-- Azure Key Vault for secret storage
-- Managed identity for authorized Key Vault access
-- Application Insights for telemetry
-- Azure-hosted database infrastructure for persistent storage
+The `v4` image was successfully built and pushed to Azure Container Registry. The live `/ui` endpoint returned HTTP 200 with an HTML content type, and the interface was confirmed working.
 
-Before a deployment is considered verified, confirm that the deployed image contains the latest code, the correct managed identity is selected, Key Vault retrieval succeeds, the API starts correctly, and telemetry is received without exposing secrets.
+For future deployments, build and push a new image, update the Container App, and verify the health endpoint, `/ui`, agent functionality, identity configuration, and telemetry.
 
-## Current Security-Hardening Status
+## Current Verification Status
 
 | Area | Status |
 |---|---|
-| Key Vault retrieval code | Implemented; local tests passed |
-| Key Vault and managed identity permissions | Configured; runtime verification required |
-| Deployed Key Vault secret retrieval | Pending verification |
-| Application Insights integration | Configured; ingestion observed |
-| Effective telemetry retention | Verify the Azure resource setting |
-| 30-day retention policy | Proposed, not implemented |
-| Automated tests | Previously passed; rerun after changes |
+| Azure image build and push (`v4`) | Verified |
+| Container App update | Completed |
+| Live HTML interface | Verified; HTTP 200 |
+| Panel colour and footer updates | Visually verified |
+| Automated tests | Previously passed; rerun for final evidence |
+| Key Vault and managed identity configuration | Configured; retain role-assignment evidence |
+| End-to-end Key Vault audit evidence | Further evidence recommended |
+| Application Insights telemetry | Ingestion previously observed |
+| Effective retention setting | Confirm against the Azure resource |
+| 90-day retention policy | Implemented |
 
 ## Project Goal
 
-PowerAssist demonstrates how a small tool-using AI agent can combine RAG, structured lookups, energy calculations, input validation, secrets management, monitoring, and automated testing in a practical application relevant to Nigeria's electricity sector.
+PowerAssist demonstrates how a small tool-using AI agent can combine RAG, structured lookups, energy calculations, input validation, secret management, monitoring, and automated testing in a practical application relevant to Nigeria's electricity sector.

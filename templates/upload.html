@@ -162,9 +162,7 @@
     /* Style the electricity information sidebar. */
     .info-sidebar {
         padding: 26px;
-        background:
-            radial-gradient(circle at 85% 18%, rgba(196, 181, 253, 0.30), transparent 35%),
-            linear-gradient(160deg, #ffffff 0%, #f5f3ff 55%, #eef6ff 100%);
+        background: var(--surface);
     }
 
     .sidebar-brand {
@@ -790,6 +788,14 @@
         color: #3730a3;
     }
 
+    .plain-footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        text-align: center;
+    }
+
     /* Style the PowerAssist electricity toolkit footer. */
     .footer {
         margin-top: 24px;
@@ -913,11 +919,11 @@
     <header class="topbar">
 
         <div class="brand">
-            <div class="brand-icon">✦</div>
+            <div class="brand-icon">⚡</div>
 
             <div>
                 <h1>PowerAssist</h1>
-                <p>Your Nigerian electricity assistant</p>
+                <p>Your Nigerian Electricity Assistant</p>
             </div>
         </div>
 
@@ -935,11 +941,9 @@
         <aside class="panel info-sidebar">
 
             <div class="sidebar-brand">
-                <div class="sidebar-brand-icon">⚡</div>
-                <div>
-                    <h2>PowerAssist</h2>
-                    <p>Your Nigeria Electricity Assistant</p>
-                </div>
+
+                <div class="eyebrow">✦ PowerAssist AI</div>
+
             </div>
 
             <p class="sidebar-intro">
@@ -1001,8 +1005,6 @@
         <section class="panel">
 
             <div class="panel-header">
-
-                <div class="eyebrow">✦ PowerAssist AI</div>
 
                 <h2>How can I help you today?</h2>
 
@@ -1096,6 +1098,10 @@
     </section>
 
 </main>
+
+<footer class="plain-footer">
+    PowerAssist provides electricity insights and appliance energy estimates using its knowledge base and AI-powered tools. Estimates are for informational purposes and may differ from actual consumption.
+</footer>
 
 <script>
     const questionInput = document.getElementById("question");

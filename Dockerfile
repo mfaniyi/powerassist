@@ -11,6 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 COPY data ./data
+COPY templates ./templates
 
 RUN uv sync --frozen --no-dev
 
